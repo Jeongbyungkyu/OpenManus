@@ -39,6 +39,13 @@ class BaseAgent(BaseModel, ABC):
     max_steps: int = Field(default=10, description="Maximum steps before termination")
     current_step: int = Field(default=0, description="Current step in execution")
 
+    # Token usage tracking
+    prompt_tokens: int = Field(default=0, description="Total prompt tokens used")
+    completion_tokens: int = Field(
+        default=0, description="Total completion tokens used"
+    )
+    total_tokens: int = Field(default=0, description="Total tokens used")
+
     duplicate_threshold: int = 2
 
     class Config:
@@ -53,6 +60,31 @@ class BaseAgent(BaseModel, ABC):
         if not isinstance(self.memory, Memory):
             self.memory = Memory()
         return self
+
+    def update_token_usage(self, usage: dict) -> None:
+        """Update token usage statistics.
+
+        Args:
+            usage: Dictionary containing token usage information from LLM response
+        """
+        if not usage:
+            return
+
+        self.prompt_tokens += usage.get("prompt_tokens", 0)
+        self.completion_tokens += usage.get("completion_tokens", 0)
+        self.total_tokens += usage.get("total_tokens", 0)
+
+        logger.info(
+            f"Token usage updated - Prompt: {self.prompt_tokens}, Completion: {self.completion_tokens}, Total: {self.total_tokens}"
+        )
+
+    def get_token_usage_summary(self) -> str:
+        """Get a summary of token usage.
+
+        Returns:
+            str: Formatted summary of token usage
+        """
+        return f"Token Usage Summary:\n- Prompt Tokens: {self.prompt_tokens}\n- Completion Tokens: {self.completion_tokens}\n- Total Tokens: {self.total_tokens}"
 
     @asynccontextmanager
     async def state_context(self, new_state: AgentState):
@@ -147,6 +179,9 @@ class BaseAgent(BaseModel, ABC):
                 self.current_step = 0
                 self.state = AgentState.IDLE
                 results.append(f"Terminated: Reached max steps ({self.max_steps})")
+
+            # Add token usage summary to results
+            results.append(self.get_token_usage_summary())
 
         return "\n".join(results) if results else "No steps executed"
 

@@ -40,7 +40,7 @@ class ToolCallAgent(ReActAgent):
             self.messages += [user_msg]
 
         # Get response with tool options
-        response = await self.llm.ask_tool(
+        response, usage = await self.llm.ask_tool(
             messages=self.messages,
             system_msgs=[Message.system_message(self.system_prompt)]
             if self.system_prompt
@@ -49,6 +49,9 @@ class ToolCallAgent(ReActAgent):
             tool_choice=self.tool_choices,
         )
         self.tool_calls = response.tool_calls
+
+        # Update token usage
+        self.update_token_usage(usage)
 
         # Log response info
         logger.info(f"✨ {self.name}'s thoughts: {response.content}")

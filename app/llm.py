@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from openai import (
     APIError,
@@ -116,7 +116,7 @@ class LLM:
         system_msgs: Optional[List[Union[dict, Message]]] = None,
         stream: bool = True,
         temperature: Optional[float] = None,
-    ) -> str:
+    ) -> tuple[str, dict]:
         """
         Send a prompt to the LLM and get the response.
 
@@ -127,7 +127,7 @@ class LLM:
             temperature (float): Sampling temperature for the response
 
         Returns:
-            str: The generated response
+            tuple[str, dict]: The generated response and token usage information
 
         Raises:
             ValueError: If messages are invalid or response is empty
@@ -161,7 +161,15 @@ class LLM:
 
                 if not response.choices or not response.choices[0].message.content:
                     raise ValueError("Empty or invalid response from LLM")
-                return response.choices[0].message.content
+
+                # Get token usage information
+                usage = {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens,
+                }
+
+                return response.choices[0].message.content, usage
 
             # Streaming request
             params["stream"] = True
@@ -177,7 +185,9 @@ class LLM:
             full_response = "".join(collected_messages).strip()
             if not full_response:
                 raise ValueError("Empty response from streaming LLM")
-            return full_response
+
+            # For streaming responses, we don't have token usage information
+            return full_response, {}
 
         except ValueError as ve:
             logger.error(f"Validation error: {ve}")
@@ -202,7 +212,7 @@ class LLM:
         tool_choice: TOOL_CHOICE_TYPE = ToolChoice.AUTO,  # type: ignore
         temperature: Optional[float] = None,
         **kwargs,
-    ):
+    ) -> tuple[Any, dict]:
         """
         Ask LLM using functions/tools and return the response.
 
@@ -216,7 +226,7 @@ class LLM:
             **kwargs: Additional completion arguments
 
         Returns:
-            ChatCompletionMessage: The model's response
+            tuple[Any, dict]: The model's response and token usage information
 
         Raises:
             ValueError: If tools, tool_choice, or messages are invalid
@@ -264,7 +274,14 @@ class LLM:
                 print(response)
                 raise ValueError("Invalid or empty response from LLM")
 
-            return response.choices[0].message
+            # Get token usage information
+            usage = {
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens,
+            }
+
+            return response.choices[0].message, usage
 
         except ValueError as ve:
             logger.error(f"Validation error in ask_tool: {ve}")
