@@ -54,25 +54,30 @@ IMPORTANT: When given a vague or multi-part query, try to formulate a specific s
         query = query.strip()
         if not query:
             return ["Error: Empty search query provided"]
-            
+
         # Run the search in a thread pool to prevent blocking
         loop = asyncio.get_event_loop()
         search_engine = self.get_search_engine()
-        
+
         try:
             links = await loop.run_in_executor(
                 None,
-                lambda: list(search_engine.perform_search(query, num_results=num_results)),
+                lambda: list(
+                    search_engine.perform_search(query, num_results=num_results)
+                ),
             )
-            
+
             # If no results, return a helpful message
             if not links:
-                return [f"No search results found for query: '{query}'. Consider refining your search terms."]
-                
+                return [
+                    f"No search results found for query: '{query}'. Consider refining your search terms."
+                ]
+
             return links
         except Exception as e:
-            return [f"Search error: {str(e)}. Please try a different query or search engine."]
-        
+            return [
+                f"Search error: {str(e)}. Please try a different query or search engine."
+            ]
 
     def get_search_engine(self) -> WebSearchEngine:
         """Determines the search engine to use based on the configuration."""

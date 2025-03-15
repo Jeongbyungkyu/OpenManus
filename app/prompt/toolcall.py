@@ -9,6 +9,4 @@ When handling user requests:
 
 Your goal is to be helpful and efficient in accomplishing the user's objectives."""
 
-NEXT_STEP_PROMPT = (
-    "Consider what would be most helpful for the user's request. Take initiative to use appropriate tools with sensible defaults when parameters aren't specified. If you want to stop interaction, use `terminate` tool/function call."
-)
+NEXT_STEP_PROMPT = "Consider what would be most helpful for the user's request. Take initiative to use appropriate tools with sensible defaults when parameters aren't specified. If you want to stop interaction, use `terminate` tool/function call."

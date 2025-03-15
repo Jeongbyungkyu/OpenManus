@@ -19,9 +19,11 @@ async def run_flow():
         if prompt.strip().isspace() or not prompt:
             logger.warning("Empty prompt provided.")
             return
-            
+
         if is_break_command(prompt):
-            logger.warning("Break command provided at start. No ongoing conversation to affect.")
+            logger.warning(
+                "Break command provided at start. No ongoing conversation to affect."
+            )
 
         flow = FlowFactory.create_flow(
             flow_type=FlowType.PLANNING,
